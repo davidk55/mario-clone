@@ -78,6 +78,7 @@ const keys = {
   },
 };
 
+let scrollOffset = 0;
 // ===================== ANIMATION LOOP =====================
 function animate() {
   requestAnimationFrame(animate);
@@ -111,6 +112,9 @@ function animate() {
     }
   });
 
+  if (scrollOffset > 2000) {
+    console.log('You win!');
+  }
 }
 // ===================== EXECUTION =====================
 animate();
