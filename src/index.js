@@ -8,6 +8,7 @@ canvas.height = innerHeight;
 const c = canvas.getContext('2d');
 
 // ===================== CLASSES =====================
+let gravity = 0.5;
 class Player {
   constructor() {
     this.position = {
@@ -29,6 +30,15 @@ class Player {
 
   update() {
     this.draw();
+
+    this.position.y += this.velocity.y;
+    this.position.x += this.velocity.x;
+    const approxPosition = this.position.y + this.height + this.velocity.y;
+    if (approxPosition < canvas.height) {
+      this.velocity.y += gravity;
+    } else {
+      this.velocity.y = 0;
+    }
   }
 }
 
