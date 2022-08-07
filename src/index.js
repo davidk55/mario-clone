@@ -45,13 +45,13 @@ class Player {
 }
 
 class Platform {
-  constructor() {
+  constructor(x, y, width, height) {
     this.position = {
-      x: 300,
-      y: 450,
+      x: x,
+      y: y,
     };
-    this.width = 200;
-    this.height = 40;
+    this.width = width;
+    this.height = height;
   }
 
   draw() {
@@ -62,7 +62,10 @@ class Platform {
 
 // ===================== VARIABLES =====================
 const player = new Player();
-const platform = new Platform();
+const platforms = [
+  new Platform(200, 500, 100, 40),
+  new Platform(500, 400, 100, 40),
+];
 const keys = {
   right: {
     pressed: false,
@@ -80,22 +83,34 @@ function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
   player.update();
-  platform.draw();
+  platforms.forEach((p) => p.draw());
 
-  if (keys.right.pressed) player.velocity.x = 5;
-  else if (keys.left.pressed) player.velocity.x = -5;
-  else player.velocity.x *= 0.9;
+  if (keys.right.pressed && player.position.x < 600) player.velocity.x = 5;
+  else if (keys.left.pressed && player.position.x > 100) player.velocity.x = -5;
+  else {
+    player.velocity.x *= 0.9;
 
-  if (
-    player.position.y + player.height <= platform.position.y &&
-    player.position.y + player.height + player.velocity.y >=
-      platform.position.y &&
-    player.position.x + player.width >= platform.position.x &&
-    player.position.x <= platform.position.x + platform.width
-  ) {
-    player.velocity.y = 0;
-    player.curJumpCount = 0;
+    if (keys.right.pressed) {
+      scrollOffset += 5;
+      platforms.forEach((p) => (p.position.x -= 5));
+    } else if (keys.left.pressed) {
+      scrollOffset -= 5;
+      platforms.forEach((p) => (p.position.x += 5));
+    }
   }
+
+  platforms.forEach((p) => {
+    if (
+      player.position.y + player.height <= p.position.y &&
+      player.position.y + player.height + player.velocity.y >= p.position.y &&
+      player.position.x + player.width >= p.position.x &&
+      player.position.x <= p.position.x + p.width
+    ) {
+      player.velocity.y = 0;
+      player.curJumpCount = 0;
+    }
+  });
+
 }
 // ===================== EXECUTION =====================
 animate();
