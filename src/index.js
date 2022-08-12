@@ -1,5 +1,6 @@
 import './styles/main.scss';
 import './scripts/utils.js';
+import terrainTilemap from './assets/terrain-tilemap.png';
 
 // ===================== CANVAS =====================
 const canvas = document.querySelector('#canvas');
@@ -12,15 +13,15 @@ let gravity = 0.5;
 class Player {
   constructor() {
     this.position = {
-      x: 100,
+      x: 150,
       y: 500,
     };
     this.velocity = {
       x: 0,
       y: 0,
     };
-    this.width = 100;
-    this.height = 100;
+    this.width = 50;
+    this.height = 70;
     this.curJumpCount = 0;
   }
 
@@ -45,27 +46,39 @@ class Player {
 }
 
 class Platform {
-  constructor(x, y, width, height) {
+  constructor(x, y, width, height, image, tile) {
     this.position = {
       x: x,
       y: y,
     };
     this.width = width;
     this.height = height;
+    this.image = image;
+    this.tile = tile;
   }
 
   draw() {
-    c.fillStyle = 'blue';
-    c.fillRect(this.position.x, this.position.y, this.width, this.height);
+    c.drawImage(
+      this.image,
+      this.tile.position.x,
+      this.tile.position.y,
+      this.tile.width,
+      this.tile.height,
+      this.position.x,
+      this.position.y,
+      this.width,
+      this.height
+    );
   }
 }
 
 // ===================== VARIABLES =====================
 const player = new Player();
-const platforms = [
-  new Platform(200, 500, 100, 40),
-  new Platform(500, 400, 100, 40),
-];
+let platforms = [];
+
+drawGround(64, canvas.height, 50);
+drawWall(64, canvas.height, 16);
+
 const keys = {
   right: {
     pressed: false,
@@ -84,17 +97,19 @@ function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
   player.update();
-  platforms.forEach((p) => p.draw());
+  platforms.forEach((p) => {
+    p.draw();
+  });
 
   if (keys.right.pressed && player.position.x < 600) player.velocity.x = 5;
-  else if (keys.left.pressed && player.position.x > 100) player.velocity.x = -5;
+  else if (keys.left.pressed && player.position.x > 115) player.velocity.x = -5;
   else {
     player.velocity.x *= 0.9;
 
     if (keys.right.pressed) {
       scrollOffset += 5;
       platforms.forEach((p) => (p.position.x -= 5));
-    } else if (keys.left.pressed) {
+    } else if (keys.left.pressed && scrollOffset > 0) {
       scrollOffset -= 5;
       platforms.forEach((p) => (p.position.x += 5));
     }
@@ -116,6 +131,106 @@ function animate() {
     console.log('You win!');
   }
 }
+
+function drawGround(drawStartX, drawY, tileCount) {
+  const platformImage = new Image();
+  platformImage.src = terrainTilemap;
+  let curX = drawStartX;
+
+  // ================ BEGINNING TILE ================
+  const tileInformationBeg = {
+    position: {
+      x: 97,
+      y: 1,
+    },
+    width: 15,
+    height: 30,
+  };
+  platforms.push(
+    new Platform(
+      curX,
+      drawY - tileInformationBeg.height * 2,
+      tileInformationBeg.width * 2,
+      tileInformationBeg.height * 2,
+      platformImage,
+      tileInformationBeg
+    )
+  );
+  curX += tileInformationBeg.width * 2;
+
+  // ================ MIDDLE TILE ================
+  const tileInformationMid = {
+    position: {
+      x: tileInformationBeg.position.x + tileInformationBeg.width,
+      y: tileInformationBeg.position.y,
+    },
+    width: 24,
+    height: tileInformationBeg.height,
+  };
+  for (let i = 0; i < tileCount; i++) {
+    platforms.push(
+      new Platform(
+        curX,
+        drawY - tileInformationMid.height * 2,
+        tileInformationMid.width * 2,
+        tileInformationMid.height * 2,
+        platformImage,
+        tileInformationMid
+      )
+    );
+    curX += tileInformationMid.width * 2;
+  }
+
+  // ================ ENDING TILE ================
+  const tileInformationEnd = {
+    position: {
+      x: tileInformationMid.position.x + tileInformationMid.width,
+      y: tileInformationBeg.position.y,
+    },
+    width: 7,
+    height: tileInformationBeg.height,
+  };
+  platforms.push(
+    new Platform(
+      curX,
+      drawY - tileInformationMid.height * 2,
+      tileInformationEnd.width * 2,
+      tileInformationEnd.height * 2,
+      platformImage,
+      tileInformationEnd
+    )
+  );
+  curX += tileInformationBeg.width * 2;
+}
+
+function drawWall(drawX, drawStartY, tileCount) {
+  const platformImage = new Image();
+  platformImage.src = terrainTilemap;
+  let curY = drawStartY;
+
+  const tileInformation = {
+    position: {
+      x: 208,
+      y: 16,
+    },
+    width: 32,
+    height: 32,
+  };
+  for (let i = 0; i < tileCount; i++) {
+    platforms.push(
+      new Platform(
+        drawX - tileInformation.width * 2,
+        curY,
+        tileInformation.width * 2,
+        tileInformation.height * 2,
+        platformImage,
+        tileInformation
+      )
+    );
+    curY -= tileInformation.height * 2;
+  }
+}
+
 // ===================== EXECUTION =====================
 animate();
 
