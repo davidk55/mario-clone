@@ -133,7 +133,8 @@ addEventListener('keydown', (e) => {
         player.velocity.y -= 15;
         player.curJumpCount++;
       } else if (!e.repeat && player.curJumpCount == 1) {
-        player.velocity.y -= 12;
+        if (player.velocity.y > 0) player.velocity.y = 0;
+        player.velocity.y -= 10;
         player.curJumpCount++;
       }
       break;
