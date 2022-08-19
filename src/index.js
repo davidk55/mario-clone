@@ -4,8 +4,8 @@ import terrainTilemap from './assets/terrain-tilemap.png';
 
 // ===================== CANVAS =====================
 const canvas = document.querySelector('#canvas');
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+canvas.width = 1024;
+canvas.height = 576;
 const c = canvas.getContext('2d');
 
 // ===================== CLASSES =====================
@@ -14,7 +14,7 @@ class Player {
   constructor() {
     this.position = {
       x: 150,
-      y: 500,
+      y: 300,
     };
     this.velocity = {
       x: 0,
@@ -101,7 +101,7 @@ function animate() {
     p.draw();
   });
 
-  if (keys.right.pressed && player.position.x < 600) player.velocity.x = 5;
+  if (keys.right.pressed && player.position.x < 450) player.velocity.x = 5;
   else if (keys.left.pressed && player.position.x > 115) player.velocity.x = -5;
   else {
     player.velocity.x *= 0.9;
@@ -245,11 +245,11 @@ addEventListener('keydown', (e) => {
       break;
     case 'KeyW':
       if (!e.repeat && player.curJumpCount == 0) {
-        player.velocity.y -= 15;
+        player.velocity.y -= 12;
         player.curJumpCount++;
       } else if (!e.repeat && player.curJumpCount == 1) {
         if (player.velocity.y > 0) player.velocity.y = 0;
-        player.velocity.y -= 10;
+        player.velocity.y -= 12;
         player.curJumpCount++;
       }
       break;
