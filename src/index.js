@@ -76,8 +76,19 @@ class Platform {
 const player = new Player();
 let platforms = [];
 
-drawGround(64, canvas.height, 50);
-drawWall(64, canvas.height, 16);
+let groundEnd = drawGround(64, canvas.height, 40);
+groundEnd = drawGround(groundEnd + 400, canvas.height, 20);
+drawGround(1000, 300, 3);
+
+drawGround(3200, 300, 3);
+drawGround(3700, 200, 3);
+drawGround(4200, 200, 12);
+
+drawGround(5200, 400, 1);
+drawGround(5600, 300, 1);
+drawGround(6100, 300, 1);
+drawGround(6600, canvas.height, 20);
+drawWall(64, canvas.height, 10);
 
 const keys = {
   right: {
@@ -92,14 +103,15 @@ const keys = {
 };
 
 let scrollOffset = 0;
+
 // ===================== ANIMATION LOOP =====================
 function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
-  player.update();
   platforms.forEach((p) => {
     p.draw();
   });
+  player.update();
 
   if (keys.right.pressed && player.position.x < 450) player.velocity.x = 5;
   else if (keys.left.pressed && player.position.x > 115) player.velocity.x = -5;
@@ -201,6 +213,7 @@ function drawGround(drawStartX, drawY, tileCount) {
     )
   );
   curX += tileInformationBeg.width * 2;
+  return curX;
 }
 
 function drawWall(drawX, drawStartY, tileCount) {
