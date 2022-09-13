@@ -1,6 +1,13 @@
 import './styles/main.scss';
 import './scripts/utils.js';
 import terrainTilemap from './assets/terrain-tilemap.png';
+import idleLeft from './assets/playerIdleLeft.png';
+import idleRight from './assets/playerIdleRight.png';
+import runLeft from './assets/playerRunLeft.png';
+import runRight from './assets/playerRunRight.png';
+import jumpLeft from './assets/playerJumpLeft.png';
+import jumpRight from './assets/playerJumpRight.png';
+import background from './assets/background.png';
 
 // ===================== CANVAS =====================
 const canvas = document.querySelector('#canvas');
@@ -236,6 +243,14 @@ class MovingGameObject {
   update() {
     this.draw();
 
+    // Set framerate
+    if (this.delayCounter >= this.frameDelay) {
+      if (this.currentFrame > 9) this.currentFrame = 0;
+      else this.currentFrame++;
+
+      this.delayCounter = 0;
+    } else this.delayCounter++;
+
     // Apply velocity
     this.position.y += this.velocity.y;
     this.position.x += this.velocity.x;
@@ -294,10 +309,10 @@ class Player extends MovingGameObject {
   }
 }
 
+// ===================== VARIABLES =====================
 
 let collidableGameObjects = [];
 let backgroundObjects = [];
-
 
 const keys = {
   right: {
@@ -331,9 +346,11 @@ function animate() {
     if (keys.right.pressed) {
       scrollOffset += 5;
       collidableGameObjects.forEach((o) => (o.position.x -= 5));
+      backgroundObjects.forEach((b) => (b.position.x -= 2));
     } else if (keys.left.pressed && scrollOffset > 0) {
       scrollOffset -= 5;
       collidableGameObjects.forEach((o) => (o.position.x += 5));
+      backgroundObjects.forEach((b) => (b.position.x += 2));
     }
   }
 
@@ -508,9 +525,11 @@ addEventListener('keydown', (e) => {
   switch (e.code) {
     case 'KeyA':
       keys.left.pressed = true;
+      player.currentAction = 'runLeft';
       break;
     case 'KeyD':
       keys.right.pressed = true;
+      player.currentAction = 'runRight';
       break;
     case 'KeyW':
       if (!e.repeat && player.curJumpCount == 0) {
@@ -531,9 +550,11 @@ addEventListener('keyup', (e) => {
   switch (e.code) {
     case 'KeyA':
       keys.left.pressed = false;
+      player.currentAction = 'idleLeft';
       break;
     case 'KeyD':
       keys.right.pressed = false;
+      player.currentAction = 'idleRight';
       break;
     case 'KeyS':
       keys.down.pressed = false;
