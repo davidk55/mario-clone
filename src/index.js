@@ -276,8 +276,8 @@ class Player extends MovingGameObject {
     if (approxPosition < canvas.height) {
       this.velocity.y += this.gravity;
     } else {
-      this.velocity.y = 0;
-      this.curJumpCount = 0;
+      // Reset game when falling in death pits
+      if (approxPosition > canvas.height + 50) initGame();
     }
 
     if (
@@ -326,7 +326,55 @@ const keys = {
   },
 };
 
-let scrollOffset = 0;
+let scrollOffset;
+let player;
+
+function initGame() {
+  player = new Player({ x: 210, y: 300 }, 50, 70, {
+    idleLeft: {
+      image: createImage(idleLeft),
+      x: 0,
+      y: 0,
+      width: 32,
+      height: 32,
+    },
+    idleRight: {
+      image: createImage(idleRight),
+      x: 0,
+      y: -1,
+      width: 32,
+      height: 32,
+    },
+    runLeft: { image: createImage(runLeft), x: 0, y: 0, width: 32, height: 32 },
+    runRight: {
+      image: createImage(runRight),
+      x: 0,
+      y: 0,
+      width: 32,
+      height: 32,
+    },
+    jumpLeft: {
+      image: createImage(jumpLeft),
+      x: 0,
+      y: 0,
+      width: 31,
+      height: 31,
+    },
+    jumpRight: {
+      image: createImage(jumpRight),
+      x: 0,
+      y: 0,
+      width: 31,
+      height: 31,
+    },
+  });
+
+  collidableGameObjects = [];
+  backgroundObjects = [];
+  generateGameObjects();
+
+  scrollOffset = 0;
+}
 
 // ===================== ANIMATION LOOP =====================
 function animate() {
@@ -371,6 +419,7 @@ function animate() {
   }
 }
 
+// ===================== OTHER FUNCTIONS =====================
 function showWinScreen() {
   keys.left.pressed = false;
   keys.right.pressed = false;
@@ -518,6 +567,7 @@ function generateBackground({ x, y }, tileCount) {
   return curX;
 }
 // ===================== EXECUTION =====================
+initGame();
 animate();
 
 // ===================== LISTENERS =====================
