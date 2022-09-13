@@ -296,6 +296,7 @@ class Player extends MovingGameObject {
 
 
 let collidableGameObjects = [];
+let backgroundObjects = [];
 
 
 const keys = {
@@ -477,6 +478,28 @@ function generateWalls(startingPosition, tileCount) {
   return curY;
 }
 
+function generateBackground({ x, y }, tileCount) {
+  let curX = x;
+  const tileInformation = {
+    image: createImage(background),
+    x: 0,
+    y: 0,
+    width: 1000,
+    height: 750,
+  };
+  for (let i = 0; i < tileCount; i++) {
+    backgroundObjects.push(
+      new GameObject(
+        { x: curX, y: y },
+        canvas.width,
+        canvas.height,
+        tileInformation
+      )
+    );
+    curX += tileInformation.width;
+  }
+  return curX;
+}
 // ===================== EXECUTION =====================
 animate();
 
