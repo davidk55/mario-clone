@@ -11,6 +11,7 @@ import background from './assets/background.png';
 
 // ===================== CANVAS =====================
 const canvas = document.querySelector('#canvas');
+const winningContainer = document.querySelector('.winning-text-container');
 canvas.width = 1024;
 canvas.height = 576;
 const c = canvas.getContext('2d');
@@ -387,7 +388,7 @@ function animate() {
   player.update();
 
   if (keys.right.pressed && player.position.x < 450) player.velocity.x = 5;
-  else if (keys.left.pressed && player.position.x > 115) player.velocity.x = -5;
+  else if (keys.left.pressed && player.position.x > 200) player.velocity.x = -5;
   else {
     player.velocity.x *= 0.9;
 
@@ -414,8 +415,8 @@ function animate() {
     }
   });
 
-  if (scrollOffset > 2000) {
-    console.log('You win!');
+  if (scrollOffset > 6400) {
+    showWinScreen();
   }
 }
 
@@ -424,7 +425,7 @@ function showWinScreen() {
   keys.left.pressed = false;
   keys.right.pressed = false;
   player.currentAction = 'idleRight';
-  winningNode.classList.add('player-won');
+  winningContainer.classList.add('player-won');
   canvas.classList.add('dim-background');
 }
 
@@ -566,12 +567,22 @@ function generateBackground({ x, y }, tileCount) {
   }
   return curX;
 }
+
 // ===================== EXECUTION =====================
 initGame();
 animate();
 
 // ===================== LISTENERS =====================
 addEventListener('keydown', (e) => {
+  if (winningContainer.classList.contains('player-won')) {
+    if (e.code == 'KeyR') {
+      winningContainer.classList.remove('player-won');
+      canvas.classList.remove('dim-background');
+      initGame();
+    }
+    return;
+  }
+
   switch (e.code) {
     case 'KeyA':
       keys.left.pressed = true;
@@ -597,6 +608,8 @@ addEventListener('keydown', (e) => {
   }
 });
 addEventListener('keyup', (e) => {
+  if (winningContainer.classList.contains('player-won')) return;
+
   switch (e.code) {
     case 'KeyA':
       keys.left.pressed = false;

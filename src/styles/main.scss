@@ -4,7 +4,41 @@
 body {
   margin: 0;
   height: 100vh;
+  background-color: #282828;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   #canvas {
+    border-radius: 5px;
   }
+}
+
+.winning-text-container {
+  margin: 0;
+  position: absolute;
+}
+
+.winning-text-container > h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 3px;
+  text-align: center;
+  color: white;
+}
+
+div > p,
+div > h1 {
+  visibility: hidden;
+  color: white;
+}
+
+.player-won > p,
+.player-won > h1 {
+  visibility: visible;
+}
+
+.dim-background {
+  opacity: 0.5;
 }
