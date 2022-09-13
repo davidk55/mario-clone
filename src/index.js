@@ -9,61 +9,35 @@ canvas.height = 576;
 const c = canvas.getContext('2d');
 
 // ===================== CLASSES =====================
-let gravity = 0.5;
-class Player {
-  constructor() {
+class GameObject {
+  constructor(
+    { x: posX, y: posY },
+    width,
+    height,
+    { image, x: tileX, y: tileY, width: tileWidth, height: tileHeight }
+  ) {
     this.position = {
-      x: 150,
-      y: 300,
-    };
-    this.velocity = {
-      x: 0,
-      y: 0,
-    };
-    this.width = 50;
-    this.height = 70;
-    this.curJumpCount = 0;
-  }
-
-  draw() {
-    c.fillStyle = 'black';
-    c.fillRect(this.position.x, this.position.y, this.width, this.height);
-  }
-
-  update() {
-    this.draw();
-
-    this.position.y += this.velocity.y;
-    this.position.x += this.velocity.x;
-    const approxPosition = this.position.y + this.height + this.velocity.y;
-    if (approxPosition < canvas.height) {
-      this.velocity.y += gravity;
-    } else {
-      this.velocity.y = 0;
-      this.curJumpCount = 0;
-    }
-  }
-}
-
-class Platform {
-  constructor(x, y, width, height, image, tile) {
-    this.position = {
-      x: x,
-      y: y,
+      x: posX,
+      y: posY,
     };
     this.width = width;
     this.height = height;
-    this.image = image;
-    this.tile = tile;
+    this.tileInformation = {
+      image: image,
+      x: tileX,
+      y: tileY,
+      width: tileWidth,
+      height: tileHeight,
+    };
   }
 
   draw() {
     c.drawImage(
-      this.image,
-      this.tile.position.x,
-      this.tile.position.y,
-      this.tile.width,
-      this.tile.height,
+      this.tileInformation.image,
+      this.tileInformation.x,
+      this.tileInformation.y,
+      this.tileInformation.width,
+      this.tileInformation.height,
       this.position.x,
       this.position.y,
       this.width,
@@ -72,23 +46,257 @@ class Platform {
   }
 }
 
-// ===================== VARIABLES =====================
-const player = new Player();
-let platforms = [];
+class MovingGameObject {
+  velocity = {
+    x: 0,
+    y: 0,
+  };
+  currentFrame = 0;
+  frameDelay = 5;
+  delayCounter = 0;
+  currentAction = 'idleRight';
 
-let groundEnd = drawGround(64, canvas.height, 40);
-groundEnd = drawGround(groundEnd + 400, canvas.height, 20);
-drawGround(1000, 300, 3);
+  constructor(
+    { x: posX, y: posY },
+    width,
+    height,
+    {
+      idleLeft: {
+        image: idleLeftImage,
+        x: idleLeftX,
+        y: idleLeftY,
+        width: idleLeftWidth,
+        height: idleLeftHeight,
+      },
+      idleRight: {
+        image: idleRightImage,
+        x: idleRightX,
+        y: idleRightY,
+        width: idleRightWidth,
+        height: idleRightHeight,
+      },
+      runLeft: {
+        image: runLeftImage,
+        x: runLeftX,
+        y: runLeftY,
+        width: runLeftWidth,
+        height: runLeftHeight,
+      },
+      runRight: {
+        image: runRightImage,
+        x: runRightX,
+        y: runRightY,
+        width: runRightWidth,
+        height: runRightHeight,
+      },
+      jumpLeft: {
+        image: jumpLeftImage,
+        x: jumpLeftX,
+        y: jumpLeftY,
+        width: jumpLeftWidth,
+        height: jumpLeftHeight,
+      },
+      jumpRight: {
+        image: jumpRightImage,
+        x: jumpRightX,
+        y: jumpRightY,
+        width: jumpRightWidth,
+        height: jumpRightHeight,
+      },
+    }
+  ) {
+    this.position = {
+      x: posX,
+      y: posY,
+    };
+    this.width = width;
+    this.height = height;
+    this.animation = {
+      idleLeft: {
+        image: idleLeftImage,
+        x: idleLeftX,
+        y: idleLeftY,
+        width: idleLeftWidth,
+        height: idleLeftHeight,
+      },
+      idleRight: {
+        image: idleRightImage,
+        x: idleRightX,
+        y: idleRightY,
+        width: idleRightWidth,
+        height: idleRightHeight,
+      },
+      runLeft: {
+        image: runLeftImage,
+        x: runLeftX,
+        y: runLeftY,
+        width: runLeftWidth,
+        height: runLeftHeight,
+      },
+      runRight: {
+        image: runRightImage,
+        x: runRightX,
+        y: runRightY,
+        width: runRightWidth,
+        height: runRightHeight,
+      },
+      jumpLeft: {
+        image: jumpLeftImage,
+        x: jumpLeftX,
+        y: jumpLeftY,
+        width: jumpLeftWidth,
+        height: jumpLeftHeight,
+      },
+      jumpRight: {
+        image: jumpRightImage,
+        x: jumpRightX,
+        y: jumpRightY,
+        width: jumpRightWidth,
+        height: jumpRightHeight,
+      },
+    };
+  }
 
-drawGround(3200, 300, 3);
-drawGround(3700, 200, 3);
-drawGround(4200, 200, 12);
+  draw() {
+    if (this.currentAction == 'idleRight') {
+      c.drawImage(
+        this.animation.idleRight.image,
+        this.animation.idleRight.width * this.currentFrame,
+        this.animation.idleRight.y,
+        this.animation.idleRight.width,
+        this.animation.idleRight.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'idleLeft') {
+      c.drawImage(
+        this.animation.idleLeft.image,
+        this.animation.idleLeft.width * this.currentFrame,
+        this.animation.idleLeft.y,
+        this.animation.idleLeft.width,
+        this.animation.idleLeft.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'runRight') {
+      c.drawImage(
+        this.animation.runRight.image,
+        this.animation.runRight.width * this.currentFrame,
+        this.animation.runRight.y,
+        this.animation.runRight.width,
+        this.animation.runRight.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'runLeft') {
+      c.drawImage(
+        this.animation.runLeft.image,
+        this.animation.runLeft.width * this.currentFrame,
+        this.animation.runLeft.y,
+        this.animation.runLeft.width,
+        this.animation.runLeft.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'jumpRight') {
+      c.drawImage(
+        this.animation.jumpRight.image,
+        this.animation.jumpRight.x,
+        this.animation.jumpRight.y,
+        this.animation.jumpRight.width,
+        this.animation.jumpRight.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'jumpLeft') {
+      c.drawImage(
+        this.animation.jumpLeft.image,
+        this.animation.jumpLeft.x,
+        this.animation.jumpLeft.y,
+        this.animation.jumpLeft.width,
+        this.animation.jumpLeft.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    }
+  }
 
-drawGround(5200, 400, 1);
-drawGround(5600, 300, 1);
-drawGround(6100, 300, 1);
-drawGround(6600, canvas.height, 20);
-drawWall(64, canvas.height, 10);
+  update() {
+    this.draw();
+
+    // Apply velocity
+    this.position.y += this.velocity.y;
+    this.position.x += this.velocity.x;
+  }
+}
+
+class Player extends MovingGameObject {
+  curJumpCount = 0;
+  velocity = {
+    x: 0,
+    y: 0,
+  };
+  gravity = 0.5;
+
+  constructor(position, width, height, animation) {
+    super(position, width, height, animation);
+  }
+
+  update() {
+    super.update();
+
+    const approxPosition = this.position.y + this.height + this.velocity.y;
+    if (approxPosition < canvas.height) {
+      this.velocity.y += this.gravity;
+    } else {
+      this.velocity.y = 0;
+      this.curJumpCount = 0;
+    }
+
+    if (
+      this.curJumpCount != 0 &&
+      (this.currentAction == 'idleRight' || this.currentAction == 'runRight')
+    )
+      this.currentAction = 'jumpRight';
+    else if (
+      this.curJumpCount != 0 &&
+      (this.currentAction == 'idleLeft' || this.currentAction == 'runLeft')
+    )
+      this.currentAction = 'jumpLeft';
+    else if (
+      this.curJumpCount == 0 &&
+      this.currentAction == 'jumpRight' &&
+      keys.right.pressed
+    )
+      this.currentAction = 'runRight';
+    else if (
+      this.curJumpCount == 0 &&
+      this.currentAction == 'jumpLeft' &&
+      keys.left.pressed
+    )
+      this.currentAction = 'runLeft';
+    else if (this.curJumpCount == 0 && this.currentAction == 'jumpRight')
+      this.currentAction = 'idleRight';
+    else if (this.curJumpCount == 0 && this.currentAction == 'jumpLeft')
+      this.currentAction = 'idleLeft';
+  }
+}
+
+
+let collidableGameObjects = [];
+
 
 const keys = {
   right: {
@@ -108,9 +316,10 @@ let scrollOffset = 0;
 function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
-  platforms.forEach((p) => {
-    p.draw();
-  });
+
+  backgroundObjects.forEach((b) => b.draw());
+  collidableGameObjects.forEach((o) => o.draw());
+
   player.update();
 
   if (keys.right.pressed && player.position.x < 450) player.velocity.x = 5;
@@ -120,14 +329,14 @@ function animate() {
 
     if (keys.right.pressed) {
       scrollOffset += 5;
-      platforms.forEach((p) => (p.position.x -= 5));
+      collidableGameObjects.forEach((o) => (o.position.x -= 5));
     } else if (keys.left.pressed && scrollOffset > 0) {
       scrollOffset -= 5;
-      platforms.forEach((p) => (p.position.x += 5));
+      collidableGameObjects.forEach((o) => (o.position.x += 5));
     }
   }
 
-  platforms.forEach((p) => {
+  collidableGameObjects.forEach((p) => {
     if (
       player.position.y + player.height <= p.position.y &&
       player.position.y + player.height + player.velocity.y >= p.position.y &&
@@ -144,27 +353,61 @@ function animate() {
   }
 }
 
-function drawGround(drawStartX, drawY, tileCount) {
+function showWinScreen() {
+  keys.left.pressed = false;
+  keys.right.pressed = false;
+  player.currentAction = 'idleRight';
+  winningNode.classList.add('player-won');
+  canvas.classList.add('dim-background');
+}
+
+function createImage(src) {
+  const image = new Image();
+  image.src = src;
+  return image;
+}
+
+function generateGameObjects() {
+  let platformEnd = generatePlatforms({ x: 64, y: canvas.height }, 40);
+  platformEnd = generatePlatforms(
+    { x: platformEnd + 400, y: canvas.height },
+    20
+  );
+  generatePlatforms({ x: 1000, y: 300 }, 3);
+
+  generatePlatforms({ x: 3200, y: 300 }, 3);
+  generatePlatforms({ x: 3700, y: 200 }, 3);
+  generatePlatforms({ x: 4200, y: 200 }, 12);
+
+  generatePlatforms({ x: 5200, y: 400 }, 1);
+  generatePlatforms({ x: 5600, y: 300 }, 1);
+  generatePlatforms({ x: 6100, y: 300 }, 1);
+  generatePlatforms({ x: 6600, y: canvas.height }, 20);
+
+  generateWalls({ x: 0, y: canvas.height - 64 }, 20);
+
+  generateBackground({ x: 0, y: 0 }, 4);
+}
+
+function generatePlatforms({ x, y }, tileCount) {
+  let curX = x;
+
   const platformImage = new Image();
   platformImage.src = terrainTilemap;
-  let curX = drawStartX;
 
   // ================ BEGINNING TILE ================
   const tileInformationBeg = {
-    position: {
-      x: 97,
-      y: 1,
-    },
+    image: platformImage,
+    x: 97,
+    y: 1,
     width: 15,
     height: 30,
   };
-  platforms.push(
-    new Platform(
-      curX,
-      drawY - tileInformationBeg.height * 2,
+  collidableGameObjects.push(
+    new GameObject(
+      { x: curX, y: y - tileInformationBeg.height * 2 },
       tileInformationBeg.width * 2,
       tileInformationBeg.height * 2,
-      platformImage,
       tileInformationBeg
     )
   );
@@ -172,21 +415,18 @@ function drawGround(drawStartX, drawY, tileCount) {
 
   // ================ MIDDLE TILE ================
   const tileInformationMid = {
-    position: {
-      x: tileInformationBeg.position.x + tileInformationBeg.width,
-      y: tileInformationBeg.position.y,
-    },
+    image: platformImage,
+    x: tileInformationBeg.x + tileInformationBeg.width,
+    y: tileInformationBeg.y,
     width: 24,
     height: tileInformationBeg.height,
   };
   for (let i = 0; i < tileCount; i++) {
-    platforms.push(
-      new Platform(
-        curX,
-        drawY - tileInformationMid.height * 2,
+    collidableGameObjects.push(
+      new GameObject(
+        { x: curX, y: y - tileInformationMid.height * 2 },
         tileInformationMid.width * 2,
         tileInformationMid.height * 2,
-        platformImage,
         tileInformationMid
       )
     );
@@ -195,20 +435,17 @@ function drawGround(drawStartX, drawY, tileCount) {
 
   // ================ ENDING TILE ================
   const tileInformationEnd = {
-    position: {
-      x: tileInformationMid.position.x + tileInformationMid.width,
-      y: tileInformationBeg.position.y,
-    },
+    image: platformImage,
+    x: tileInformationMid.x + tileInformationMid.width,
+    y: tileInformationBeg.y,
     width: 7,
     height: tileInformationBeg.height,
   };
-  platforms.push(
-    new Platform(
-      curX,
-      drawY - tileInformationMid.height * 2,
+  collidableGameObjects.push(
+    new GameObject(
+      { x: curX, y: y - tileInformationEnd.height * 2 },
       tileInformationEnd.width * 2,
       tileInformationEnd.height * 2,
-      platformImage,
       tileInformationEnd
     )
   );
@@ -216,32 +453,28 @@ function drawGround(drawStartX, drawY, tileCount) {
   return curX;
 }
 
-function drawWall(drawX, drawStartY, tileCount) {
-  const platformImage = new Image();
-  platformImage.src = terrainTilemap;
-  let curY = drawStartY;
+function generateWalls(startingPosition, tileCount) {
+  let curY = startingPosition.y;
 
   const tileInformation = {
-    position: {
-      x: 208,
-      y: 16,
-    },
+    image: createImage(terrainTilemap),
+    x: 208,
+    y: 16,
     width: 32,
     height: 32,
   };
   for (let i = 0; i < tileCount; i++) {
-    platforms.push(
-      new Platform(
-        drawX - tileInformation.width * 2,
-        curY,
-        tileInformation.width * 2,
-        tileInformation.height * 2,
-        platformImage,
+    collidableGameObjects.push(
+      new GameObject(
+        { x: startingPosition.x, y: curY },
+        64,
+        64,
         tileInformation
       )
     );
-    curY -= tileInformation.height * 2;
+    curY -= 64;
   }
+  return curY;
 }
 
 // ===================== EXECUTION =====================
