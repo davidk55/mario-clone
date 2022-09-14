@@ -1,5 +1,4 @@
 import './styles/main.scss';
-import './scripts/utils.js';
 import terrainTilemap from './assets/terrain-tilemap.png';
 import idleLeft from './assets/playerIdleLeft.png';
 import idleRight from './assets/playerIdleRight.png';
@@ -8,6 +7,8 @@ import runRight from './assets/playerRunRight.png';
 import jumpLeft from './assets/playerJumpLeft.png';
 import jumpRight from './assets/playerJumpRight.png';
 import background from './assets/background.png';
+import enemyRunLeft from './assets/enemyRunLeft.png';
+import enemyRunRight from './assets/enemyRunRight.png';
 
 // ===================== CANVAS =====================
 const canvas = document.querySelector('#canvas');
@@ -60,12 +61,36 @@ class MovingGameObject {
     y: 0,
   };
   currentFrame = 0;
+
+  constructor({ x: posX, y: posY }, width, height) {
+    this.position = {
+      x: posX,
+      y: posY,
+    };
+    this.width = width;
+    this.height = height;
+  }
+
+  update() {
+    // Apply velocity
+    this.position.y += this.velocity.y;
+    this.position.x += this.velocity.x;
+  }
+}
+
+class Player extends MovingGameObject {
+  curJumpCount = 0;
+  velocity = {
+    x: 0,
+    y: 0,
+  };
+  gravity = 0.5;
   frameDelay = 5;
   delayCounter = 0;
   currentAction = 'idleRight';
 
   constructor(
-    { x: posX, y: posY },
+    position,
     width,
     height,
     {
@@ -113,12 +138,7 @@ class MovingGameObject {
       },
     }
   ) {
-    this.position = {
-      x: posX,
-      y: posY,
-    };
-    this.width = width;
-    this.height = height;
+    super(position, width, height);
     this.animation = {
       idleLeft: {
         image: idleLeftImage,
@@ -164,7 +184,6 @@ class MovingGameObject {
       },
     };
   }
-
   draw() {
     if (this.currentAction == 'idleRight') {
       c.drawImage(
@@ -242,6 +261,7 @@ class MovingGameObject {
   }
 
   update() {
+    super.update();
     this.draw();
 
     // Set framerate
@@ -251,27 +271,6 @@ class MovingGameObject {
 
       this.delayCounter = 0;
     } else this.delayCounter++;
-
-    // Apply velocity
-    this.position.y += this.velocity.y;
-    this.position.x += this.velocity.x;
-  }
-}
-
-class Player extends MovingGameObject {
-  curJumpCount = 0;
-  velocity = {
-    x: 0,
-    y: 0,
-  };
-  gravity = 0.5;
-
-  constructor(position, width, height, animation) {
-    super(position, width, height, animation);
-  }
-
-  update() {
-    super.update();
 
     const approxPosition = this.position.y + this.height + this.velocity.y;
     if (approxPosition < canvas.height) {
@@ -310,10 +309,110 @@ class Player extends MovingGameObject {
   }
 }
 
+class Enemy extends MovingGameObject {
+  frameDelay = 5;
+  delayCounter = 0;
+  currentAction = 'runLeft';
+
+  constructor(
+    position,
+    width,
+    height,
+    {
+      runLeft: {
+        image: runLeftImage,
+        x: runLeftX,
+        y: runLeftY,
+        width: runLeftWidth,
+        height: runLeftHeight,
+      },
+      runRight: {
+        image: runRightImage,
+        x: runRightX,
+        y: runRightY,
+        width: runRightWidth,
+        height: runRightHeight,
+      },
+    },
+    movementPath,
+    pauseOnCoordinates
+  ) {
+    super(position, width, height);
+    this.pauseOnCoordinates = pauseOnCoordinates;
+    this.movementPath = movementPath;
+    this.animation = {
+      runLeft: {
+        image: runLeftImage,
+        x: runLeftX,
+        y: runLeftY,
+        width: runLeftWidth,
+        height: runLeftHeight,
+      },
+      runRight: {
+        image: runRightImage,
+        x: runRightX,
+        y: runRightY,
+        width: runRightWidth,
+        height: runRightHeight,
+      },
+    };
+    this.velocity.x = -1;
+  }
+  draw() {
+    if (this.currentAction == 'runLeft') {
+      c.drawImage(
+        this.animation.runLeft.image,
+        this.animation.runLeft.width * this.currentFrame,
+        this.animation.runLeft.y,
+        this.animation.runLeft.width,
+        this.animation.runLeft.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    } else if (this.currentAction == 'runRight') {
+      c.drawImage(
+        this.animation.runRight.image,
+        this.animation.runRight.width * this.currentFrame,
+        this.animation.runRight.y,
+        this.animation.runRight.width,
+        this.animation.runRight.height,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height
+      );
+    }
+  }
+
+  update() {
+    // Set framerate
+    if (this.delayCounter >= this.frameDelay) {
+      if (this.currentFrame > 8) this.currentFrame = 0;
+      else this.currentFrame++;
+
+      this.delayCounter = 0;
+    } else this.delayCounter++;
+
+    this.draw();
+    super.update();
+
+    if (this.position.x < this.movementPath.x1) {
+      this.velocity.x = Math.abs(this.velocity.x);
+      this.currentAction = 'runRight';
+    } else if (this.position.x > this.movementPath.x2) {
+      this.velocity.x = -Math.abs(this.velocity.x);
+      this.currentAction = 'runLeft';
+    }
+  }
+}
+
 // ===================== VARIABLES =====================
 
 let collidableGameObjects = [];
 let backgroundObjects = [];
+let enemies = [];
 
 const keys = {
   right: {
@@ -372,6 +471,7 @@ function initGame() {
 
   collidableGameObjects = [];
   backgroundObjects = [];
+  enemies = [];
   generateGameObjects();
 
   scrollOffset = 0;
@@ -384,6 +484,7 @@ function animate() {
 
   backgroundObjects.forEach((b) => b.draw());
   collidableGameObjects.forEach((o) => o.draw());
+  enemies.forEach((e) => e.update());
 
   player.update();
 
@@ -394,12 +495,24 @@ function animate() {
 
     if (keys.right.pressed) {
       scrollOffset += 5;
+
       collidableGameObjects.forEach((o) => (o.position.x -= 5));
       backgroundObjects.forEach((b) => (b.position.x -= 2));
+      enemies.forEach((e) => {
+        e.position.x -= 5;
+        e.movementPath.x1 -= 5;
+        e.movementPath.x2 -= 5;
+      });
     } else if (keys.left.pressed && scrollOffset > 0) {
       scrollOffset -= 5;
+
       collidableGameObjects.forEach((o) => (o.position.x += 5));
       backgroundObjects.forEach((b) => (b.position.x += 2));
+      enemies.forEach((e) => {
+        e.position.x += 5;
+        e.movementPath.x1 += 5;
+        e.movementPath.x2 += 5;
+      });
     }
   }
 
@@ -412,6 +525,16 @@ function animate() {
     ) {
       player.velocity.y = 0;
       player.curJumpCount = 0;
+    }
+  });
+  enemies.forEach((e) => {
+    if (
+      player.position.x + player.width >= e.position.x &&
+      player.position.x <= e.position.x + e.width &&
+      player.position.y + player.height >= e.position.y &&
+      player.position.y <= e.position.y + e.height
+    ) {
+      initGame();
     }
   });
 
@@ -436,28 +559,90 @@ function createImage(src) {
 }
 
 function generateGameObjects() {
-  let platformEnd = generatePlatforms({ x: 64, y: canvas.height }, 40);
-  platformEnd = generatePlatforms(
+  let platformEnd = generatePlatform({ x: 64, y: canvas.height }, 40);
+  platformEnd = generatePlatform(
     { x: platformEnd + 400, y: canvas.height },
     20
   );
-  generatePlatforms({ x: 1000, y: 300 }, 3);
+  generatePlatform({ x: 1000, y: 300 }, 3);
 
-  generatePlatforms({ x: 3200, y: 300 }, 3);
-  generatePlatforms({ x: 3700, y: 200 }, 3);
-  generatePlatforms({ x: 4200, y: 200 }, 12);
+  generatePlatform({ x: 3200, y: 300 }, 3);
+  generatePlatform({ x: 3700, y: 200 }, 3);
+  generatePlatform({ x: 4200, y: 200 }, 12);
 
-  generatePlatforms({ x: 5200, y: 400 }, 1);
-  generatePlatforms({ x: 5600, y: 300 }, 1);
-  generatePlatforms({ x: 6100, y: 300 }, 1);
-  generatePlatforms({ x: 6600, y: canvas.height }, 20);
+  generatePlatform({ x: 5200, y: 400 }, 1);
+  generatePlatform({ x: 5600, y: 300 }, 1);
+  generatePlatform({ x: 6100, y: 300 }, 1);
+  generatePlatform({ x: 6600, y: canvas.height }, 20);
 
-  generateWalls({ x: 0, y: canvas.height - 64 }, 20);
+  generateWall({ x: 0, y: canvas.height - 64 }, 20);
 
   generateBackground({ x: 0, y: 0 }, 4);
+
+  const animation = {
+    runLeft: {
+      image: createImage(enemyRunLeft),
+      x: 0,
+      y: 0,
+      width: 16,
+      height: 16,
+    },
+    runRight: {
+      image: createImage(enemyRunRight),
+      x: 0,
+      y: 0,
+      width: 16,
+      height: 16,
+    },
+  };
+  enemies.push(
+    new Enemy(
+      { x: 3400, y: canvas.height - 100 },
+      16 * 2.5,
+      16 * 2.5,
+      animation,
+      {
+        x1: 2700,
+        y1: canvas.height - 100,
+        x2: 3400,
+        y2: canvas.height - 100,
+      },
+      10
+    )
+  );
+  enemies.push(
+    new Enemy(
+      { x: 1500, y: canvas.height - 100 },
+      16 * 2.5,
+      16 * 2.5,
+      animation,
+      {
+        x1: 800,
+        y1: canvas.height - 100,
+        x2: 1500,
+        y2: canvas.height - 100,
+      },
+      10
+    )
+  );
+  enemies.push(
+    new Enemy(
+      { x: 4200, y: 100 },
+      16 * 2.5,
+      16 * 2.5,
+      animation,
+      {
+        x1: 4200,
+        y1: 100,
+        x2: 4780,
+        y2: 100,
+      },
+      10
+    )
+  );
 }
 
-function generatePlatforms({ x, y }, tileCount) {
+function generatePlatform({ x, y }, tileCount) {
   let curX = x;
 
   const platformImage = new Image();
@@ -521,7 +706,7 @@ function generatePlatforms({ x, y }, tileCount) {
   return curX;
 }
 
-function generateWalls(startingPosition, tileCount) {
+function generateWall(startingPosition, tileCount) {
   let curY = startingPosition.y;
 
   const tileInformation = {
